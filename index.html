@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Trabajo - Equipo (Google Sheets)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, #4299e1 0%, #2b6cb0 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow-x: auto;
+            display: block;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background: #f7f7f7;
+            font-weight: 600;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: inline-block;
+            font-weight: 600;
+        }
+
+        .status-pendiente { background: #fef3c7; color: #92400e; }
+        .status-progreso { background: #dbeafe; color: #1e40af; }
+        .status-revision { background: #e0e7ff; color: #3730a3; }
+        .status-completada { background: #d1fae5; color: #065f46; }
+        .status-bloqueada { background: #fecaca; color: #7f1d1d; }
+        .status-cancelada { background: #fee2e2; color: #991b1b; }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .alert-error {
+            background: #fed7d7;
+            color: #c53030;
+            border: 1px solid #fc8181;
+        }
+
+        .alert-info {
+            background: #bee3f8;
+            color: #2c5282;
+            border: 1px solid #90cdf4;
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            padding: 15px;
+            background: #e0e7ff;
+            border-radius: 10px;
+        }
+
+        .stat-card {
+            flex: 1;
+            min-width: 100px;
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .report-area {
+            background: #f7f7f7;
+            padding: 15px;
+            border-radius: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 0.9rem;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .config-step {
+            background: #e0e7ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .config-step h3 {
+            color: #1e40af;
+            margin-bottom: 10px;
+        }
+
+        .config-step code {
+            background: #1e1e2e;
+            color: #a5d6ff;
+            padding: 2px 6px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+
+        @media (max-width: 768px) {
+            th, td {
+                padding: 8px;
+                font-size: 0.85rem;
+            }
+            .btn {
+                width: 100%;
+                margin-top: 10px;
+            }
+            .filter-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 Registro de Trabajo - Equipo</h1>
+        
+        <div id="statusAlert"></div>
+        
+        <!-- Pantalla de configuración inicial -->
+        <div class="card" id="configCard">
+            <h2>⚙️ Configuración Inicial</h2>
+            <div class="config-step">
+                <h3>📌 Paso 1: Crear Google Sheets</h3>
+                <p>1. Ve a <a href="https://sheets.new" target="_blank">sheets.new</a> y crea una hoja llamada "Registro_Tareas"</p>
+                <p>2. Compártela con <strong>"Cualquier persona con el enlace puede editar"</strong></p>
+                <p>3. Copia el enlace del sheet</p>
+            </div>
+            
+            <div class="config-step">
+                <h3>🔧 Paso 2: Configurar Apps Script</h3>
+                <p>1. En tu Google Sheets, ve a <strong>Extensiones → Apps Script</strong></p>
+                <p>2. Pega el código del servidor (está más abajo en esta página)</p>
+                <p>3. Haz clic en <strong>"Implementar" → "Nueva implementación"</strong></p>
+                <p>4. Tipo: <strong>"Aplicación web"</strong>, acceso: <strong>"Cualquier persona"</strong></p>
+                <p>5. Copia la URL que aparece (termina en <code>/exec</code>)</p>
+            </div>
+            
+            <div class="form-group">
+                <label>🔗 Pegá acá la URL del Google Apps Script</label>
+                <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
+                <small>Ejemplo: https://script.google.com/macros/s/ABC123/exec</small>
+            </div>
+            
+            <button id="saveConfigBtn" class="btn">✅ Conectar con Google Sheets</button>
+        </div>
+        
+        <!-- Contenido principal (se muestra después de conectar) -->
+        <div id="mainContent" style="display: none;">
+            <!-- Formulario de tarea -->
+            <div class="card">
+                <h2>➕ Agregar nueva tarea</h2>
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label>👤 ¿Quién realizó la tarea? *</label>
+                        <select id="person" required>
+                            <option value="">Seleccionar persona</option>
+                            <option value="Meli">Meli</option>
+                            <option value="Vicky">Vicky</option>
+                            <option value="Lizi">Lizi</option>
+                            <option value="Dani">Dani</option>
+                            <option value="Silvi">Silvi</option>
+                            <option value="Seba">Seba</option>
+                            <option value="Mili">Mili</option>
+                            <option value="Rosario">Rosario</option>
+                            <option value="Gabi">Gabi</option>
+                            <option value="Tomi">Tomi</option>
+                            <option value="Ale">Ale</option>
+                            <option value="Mica">Mica</option>
+                            <option value="Marisa">Marisa</option>
+                            <option value="Eliana">Eliana</option>
+                            <option value="Gabriel">Gabriel</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>📝 Descripción de la tarea *</label>
+                        <textarea id="description" required placeholder="Ej: Desarrollo del login, reunión con cliente, corrección de bugs..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🏷️ Proyecto / Cliente</label>
+                        <input type="text" id="project" placeholder="Ej: Proyecto Alpha, Cliente XYZ">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>📊 Estado de la tarea</label>
+                        <select id="status">
+                            <option value="pendiente">⏳ Pendiente</option>
+                            <option value="progreso">🔄 En progreso</option>
+                            <option value="revision">👀 En revisión</option>
+                            <option value="completada">✅ Completada</option>
+                            <option value="bloqueada">🔒 Bloqueada</option>
+                            <option value="cancelada">❌ Cancelada</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn">💾 Guardar tarea en Google Sheets</button>
+                </form>
+            </div>
+            
+            <!-- Filtros -->
+            <div class="card">
+                <h2>🔍 Filtrar tareas</h2>
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label>Filtrar por persona:</label>
+                        <select id="filterPerson">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Filtrar por estado:</label>
+                        <select id="filterStatus">
+                            <option value="">Todos</option>
+                            <option value="pendiente">⏳ Pendiente</option>
+                            <option value="progreso">🔄 En progreso</option>
+                            <option value="revision">👀 En revisión</option>
+                            <option value="completada">✅ Completada</option>
+                            <option value="bloqueada">🔒 Bloqueada</option>
+                            <option value="cancelada">❌ Cancelada</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Filtrar por proyecto:</label>
+                        <select id="filterProject">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>&nbsp;</label>
+                        <button id="clearFiltersBtn" class="btn-secondary" style="padding: 8px 15px;">🗑️ Limpiar filtros</button>
+                    </div>
+                </div>
+                
+                <div id="statsContainer"></div>
+            </div>
+            
+            <!-- Lista de tareas -->
+            <div class="card">
+                <h2>📌 Listado de tareas</h2>
+                <div id="tasksList">
+                    <div class="loading">🔄 Cargando tareas desde Google Sheets...</div>
+                </div>
+            </div>
+            
+            <!-- Reportes -->
+            <div class="card">
+                <h2>📄 Reportes para la Jefa</h2>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <button id="exportCSVBtn" class="btn-export">📊 Exportar a Excel (CSV)</button>
+                    <button id="generateReportBtn" class="btn-secondary">📝 Reporte completo</button>
+                    <button id="generateStatusReportBtn" class="btn-warning">📊 Reporte por estado</button>
+                    <button id="openSheetBtn" class="btn" style="background: #34a853;">📂 Abrir Google Sheets</button>
+                </div>
+                <div id="reportContainer" style="display: none;">
+                    <div class="report-area" id="reportText"></div>
+                    <button id="copyReportBtn" class="btn" style="margin-top: 10px;">📋 Copiar reporte</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Código del Apps Script para copiar -->
+        <div class="card" id="scriptCodeCard">
+            <h2>📋 Código para Google Apps Script</h2>
+            <p>Copia y pega este código en <strong>Extensiones → Apps Script</strong> en tu Google Sheets:</p>
+            <div class="report-area" id="scriptCode" style="background: #1e1e2e; color: #a5d6ff; font-family: monospace; font-size: 0.85rem;">
+// ========== CONFIGURACIÓN ==========
+const SHEET_NAME = "Registro_Tareas";
+
+function doGet(e) {
+  return handleRequest(e);
+}
+
+function doPost(e) {
+  return handleRequest(e);
+}
+
+function handleRequest(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  
+  // Crear hoja si no existe
+  if (!sheet) {
+    const newSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet(SHEET_NAME);
+    newSheet.appendRow(['Fecha', 'Hora', 'Persona', 'Proyecto', 'Descripción', 'ID', 'Estado', 'Timestamp']);
+    return handleRequest(e);
+  }
+  
+  // Verificar encabezados
+  const firstRow = sheet.getRange(1, 1, 1, 8).getValues()[0];
+  if (!firstRow[0]) {
+    sheet.appendRow(['Fecha', 'Hora', 'Persona', 'Proyecto', 'Descripción', 'ID', 'Estado', 'Timestamp']);
+  }
+  
+  const params = e ? e.parameter : {};
+  const action = params.action;
+  
+  // Obtener todas las tareas
+  if (action === "getTasks") {
+    const data = sheet.getDataRange().getValues();
+    const tasks = [];
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] && data[i][0] !== "") {
+        tasks.push({
+          date: data[i][0],
+          time: data[i][1],
+          person: data[i][2],
+          project: data[i][3],
+          description: data[i][4],
+          id: data[i][5],
+          status: data[i][6] || 'pendiente',
+          timestamp: data[i][7]
+        });
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      tasks: tasks
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  // Agregar nueva tarea
+  if (action === "addTask") {
+    const newTask = {
+      date: params.date || new Date().toISOString().split('T')[0],
+      time: params.time || new Date().toLocaleTimeString('es-AR'),
+      person: params.person,
+      project: params.project || "Sin proyecto",
+      description: params.description,
+      id: Date.now().toString(),
+      status: params.status || 'pendiente',
+      timestamp: new Date().toISOString()
+    };
+    
+    sheet.appendRow([
+      newTask.date,
+      newTask.time,
+      newTask.person,
+      newTask.project,
+      newTask.description,
+      newTask.id,
+      newTask.status,
+      newTask.timestamp
+    ]);
+    
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      task: newTask
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  // Eliminar tarea
+  if (action === "deleteTask") {
+    const taskId = params.id;
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][5] === taskId) {
+        sheet.deleteRow(i + 1);
+        break;
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      message: "Tarea eliminada"
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  // Actualizar estado
+  if (action === "updateStatus") {
+    const taskId = params.id;
+    const newStatus = params.status;
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][5] === taskId) {
+        sheet.getRange(i + 1, 7).setValue(newStatus);
+        break;
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      message: "Estado actualizado"
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({
+    success: false,
+    error: "Acción no válida"
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+            </div>
+            <button id="copyScriptBtn" class="btn" style="margin-top: 15px;">📋 Copiar código del servidor</button>
+        </div>
+    </div>
+
+    <script>
+        let SCRIPT_URL = '';
+        let allTasks = [];
+        
+        const statusConfig = {
+            'pendiente': { emoji: '⏳', label: 'Pendiente', class: 'status-pendiente' },
+            'progreso': { emoji: '🔄', label: 'En progreso', class: 'status-progreso' },
+            'revision': { emoji: '👀', label: 'En revisión', class: 'status-revision' },
+            'completada': { emoji: '✅', label: 'Completada', class: 'status-completada' },
+            'bloqueada': { emoji: '🔒', label: 'Bloqueada', class: 'status-bloqueada' },
+            'cancelada': { emoji: '❌', label: 'Cancelada', class: 'status-cancelada' }
+        };
+        
+        // Cargar configuración guardada
+        function loadConfig() {
+            const saved = localStorage.getItem('googleScriptUrl');
+            if (saved) {
+                SCRIPT_URL = saved;
+                document.getElementById('scriptUrl').value = SCRIPT_URL;
+                document.getElementById('configCard').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('scriptCodeCard').style.display = 'none';
+                loadAllTasks();
+            }
+        }
+        
+        // Guardar configuración
+        document.getElementById('saveConfigBtn').addEventListener('click', () => {
+            const url = document.getElementById('scriptUrl').value.trim();
+            if (!url) {
+                showAlert('statusAlert', '❌ Por favor, ingresa la URL del Google Apps Script', 'error');
+                return;
+            }
+            
+            if (!url.includes('script.google.com')) {
+                showAlert('statusAlert', '❌ URL inválida. Debe ser una URL de script.google.com', 'error');
+                return;
+            }
+            
+            SCRIPT_URL = url;
+            localStorage.setItem('googleScriptUrl', url);
+            showAlert('statusAlert', '✅ Configuración guardada. Conectando con Google Sheets...', 'success');
+            
+            setTimeout(() => {
+                document.getElementById('configCard').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('scriptCodeCard').style.display = 'none';
+                loadAllTasks();
+            }, 1500);
+        });
+        
+        function showAlert(containerId, message, type) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 4000);
+        }
+        
+        // Cargar todas las tareas desde Google Sheets
+        async function loadAllTasks() {
+            if (!SCRIPT_URL) return;
+            
+            try {
+                showAlert('statusAlert', '🔄 Cargando tareas desde Google Sheets...', 'info');
+                const response = await fetch(`${SCRIPT_URL}?action=getTasks&t=${Date.now()}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    allTasks = data.tasks || [];
+                    updateFilters();
+                    renderTasks();
+                    renderStats();
+                    showAlert('statusAlert', `✅ ${allTasks.length} tareas cargadas desde Google Sheets`, 'success');
+                } else {
+                    showAlert('statusAlert', '❌ Error al cargar tareas: ' + (data.error || 'Desconocido'), 'error');
+                }
+            } catch (error) {
+                showAlert('statusAlert', '❌ Error de conexión: ' + error.message, 'error');
+            }
+        }
+        
+        // Agregar tarea
+        async function addTask(person, description, project, status) {
+            if (!SCRIPT_URL) return false;
+            
+            const params = new URLSearchParams({
+                action: 'addTask',
+                person: person,
+                description: description,
+                project: project || 'Sin proyecto',
+                status: status,
+                date: new Date().toISOString().split('T')[0],
+                time: new Date().toLocaleTimeString('es-AR')
+            });
+            
+            try {
+                const response = await fetch(`${SCRIPT_URL}?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    await loadAllTasks();
+                    showAlert('statusAlert', '✅ Tarea guardada en Google Sheets', 'success');
+                    return true;
+                } else {
+                    showAlert('statusAlert', '❌ Error al guardar: ' + data.error, 'error');
+                    return false;
+                }
+            } catch (error) {
+                showAlert('statusAlert', '❌ Error de conexión: ' + error.message, 'error');
+                return false;
+            }
+        }
+        
+        // Actualizar estado
+        async function updateTaskStatus(taskId, newStatus) {
+            if (!SCRIPT_URL) return;
+            
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=updateStatus&id=${taskId}&status=${newStatus}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    await loadAllTasks();
+                    showAlert('statusAlert', '✅ Estado actualizado en Google Sheets', 'success');
+                } else {
+                    showAlert('statusAlert', '❌ Error al actualizar estado', 'error');
+                }
+            } catch (error) {
+                showAlert('statusAlert', '❌ Error de conexión', 'error');
+            }
+        }
+        
+        // Eliminar tarea
+        async function deleteTask(taskId) {
+            if (!confirm('⚠️ ¿Eliminar esta tarea permanentemente de Google Sheets?')) return;
+            
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=deleteTask&id=${taskId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    await loadAllTasks();
+                    showAlert('statusAlert', '✅ Tarea eliminada de Google Sheets', 'success');
+                } else {
+                    showAlert('statusAlert', '❌ Error al eliminar', 'error');
+                }
+            } catch (error) {
+                showAlert('statusAlert', '❌ Error de conexión', 'error');
+            }
+        }
+        
+        // Actualizar filtros
+        function updateFilters() {
+            const persons = [...new Set(allTasks.map(t => t.person).filter(p => p))];
+            const personSelect = document.getElementById('filterPerson');
+            personSelect.innerHTML = '<option value="">Todos</option>';
+            persons.forEach(p => {
+                personSelect.innerHTML += `<option value="${p}">${p}</option>`;
+            });
+            
+            const projects = [...new Set(allTasks.map(t => t.project).filter(p => p && p !== 'Sin proyecto'))];
+            const projectSelect = document.getElementById('filterProject');
+            projectSelect.innerHTML = '<option value="">Todos</option>';
+            projects.forEach(p => {
+                projectSelect.innerHTML += `<option value="${p}">${p}</option>`;
+            });
+        }
+        
+        // Obtener tareas filtradas
+        function getFilteredTasks() {
+            const filterPerson = document.getElementById('filterPerson').value;
+            const filterStatus = document.getElementById('filterStatus').value;
+            const filterProject = document.getElementById('filterProject').value;
+            
+            return allTasks.filter(task => {
+                if (filterPerson && task.person !== filterPerson) return false;
+                if (filterStatus && task.status !== filterStatus) return false;
+                if (filterProject && task.project !== filterProject) return false;
+                return true;
+            });
+        }
+        
+        // Renderizar estadísticas
+        function renderStats() {
+            const filteredTasks = getFilteredTasks();
+            const stats = { pendiente: 0, progreso: 0, revision: 0, completada: 0, bloqueada: 0, cancelada: 0 };
+            
+            filteredTasks.forEach(task => {
+                if (stats[task.status] !== undefined) stats[task.status]++;
+            });
+            
+            const container = document.getElementById('statsContainer');
+            container.innerHTML = `
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number">${filteredTasks.length}</div>
+                        <div>Total tareas</div>
+                    </div>
+                    <div class="stat-card" style="background: #fef3c7;">
+                        <div class="stat-number">${stats.pendiente}</div>
+                        <div>⏳ Pendiente</div>
+                    </div>
+                    <div class="stat-card" style="background: #dbeafe;">
+                        <div class="stat-number">${stats.progreso}</div>
+                        <div>🔄 Progreso</div>
+                    </div>
+                    <div class="stat-card" style="background: #e0e7ff;">
+                        <div class="stat-number">${stats.revision}</div>
+                        <div>👀 Revisión</div>
+                    </div>
+                    <div class="stat-card" style="background: #d1fae5;">
+                        <div class="stat-number">${stats.completada}</div>
+                        <div>✅ Completada</div>
+                    </div>
+                    <div class="stat-card" style="background: #fecaca;">
+                        <div class="stat-number">${stats.bloqueada}</div>
+                        <div>🔒 Bloqueada</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Renderizar lista de tareas
+        function renderTasks() {
+            const filteredTasks = getFilteredTasks();
+            const container = document.getElementById('tasksList');
+            
+            if (filteredTasks.length === 0) {
+                container.innerHTML = '<div class="empty-message">📭 No hay tareas que coincidan con los filtros.</div>';
+                return;
+            }
+            
+            filteredTasks.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            let html = `<div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Persona</th>
+                            <th>Descripción</th>
+                            <th>Proyecto</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+            
+            filteredTasks.forEach(task => {
+                const status = statusConfig[task.status] || statusConfig.pendiente;
+                const fecha = new Date(task.date).toLocaleDateString('es-AR');
+                
+                html += `<tr>
+                            <td>${fecha}</td>
+                            <td>${task.time || ''}</td>
+                            <td><span class="badge" style="background:#667eea;color:white;">${escapeHtml(task.person)}</span></td>
+                            <td>${escapeHtml(task.description)}</td>
+                            <td>${escapeHtml(task.project)}</td>
+                            <td>
+                                <select class="status-select" data-id="${task.id}" style="padding:5px;border-radius:8px;">
+                                    <option value="pendiente" ${task.status === 'pendiente' ? 'selected' : ''}>⏳ Pendiente</option>
+                                    <option value="progreso" ${task.status === 'progreso' ? 'selected' : ''}>🔄 En progreso</option>
+                                    <option value="revision" ${task.status === 'revision' ? 'selected' : ''}>👀 En revisión</option>
+                                    <option value="completada" ${task.status === 'completada' ? 'selected' : ''}>✅ Completada</option>
+                                    <option value="bloqueada" ${task.status === 'bloqueada' ? 'selected' : ''}>🔒 Bloqueada</option>
+                                    <option value="cancelada" ${task.status === 'cancelada' ? 'selected' : ''}>❌ Cancelada</option>
+                                </select>
+                            </td>
+                            <td>
+                                <button class="delete-btn" data-id="${task.id}" style="background:#f56565;color:white;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;" title="Eliminar tarea">🗑️</button>
+                            </td>
+                        </tr>`;
+            });
+            
+            html += `</tbody>
+                </table>
+            </div>`;
+            container.innerHTML = html;
+            
+            // Eventos para cambiar estado
+            document.querySelectorAll('.status-select').forEach(select => {
+                select.addEventListener('change', (e) => {
+                    const taskId = select.dataset.id;
+                    const newStatus = select.value;
+                    updateTaskStatus(taskId, newStatus);
+                });
+            });
+            
+            // Eventos para eliminar
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => deleteTask(btn.dataset.id));
+            });
+        }
+        
+        // Exportar a CSV
+        function exportToCSV() {
+            if (allTasks.length === 0) {
+                alert('No hay tareas para exportar');
+                return;
+            }
+            
+            const headers = ['Fecha', 'Hora', 'Persona', 'Proyecto', 'Descripción', 'Estado'];
+            const rows = [headers];
+            
+            allTasks.forEach(task => {
+                const status = statusConfig[task.status] || statusConfig.pendiente;
+                rows.push([
+                    task.date,
+                    task.time,
+                    task.person,
+                    task.project,
+                    `"${task.description.replace(/"/g, '""')}"`,
+                    status.label
+                ]);
+            });
+            
+            const csvContent = rows.map(row => row.join(',')).join('\n');
+            downloadFile(csvContent, `reporte_completo_${new Date().toISOString().split('T')[0]}.csv`, 'text/csv');
+        }
+        
+        // Reporte completo
+        function generateFullReport() {
+            if (allTasks.length === 0) {
+                alert('No hay tareas para generar reporte');
+                return;
+            }
+            
+            const byDate = {};
+            allTasks.forEach(task => {
+                if (!byDate[task.date]) byDate[task.date] = [];
+                byDate[task.date].push(task);
+            });
+            
+            let report = '='.repeat(70) + '\n';
+            report += '📊 REPORTE COMPLETO DEL EQUIPO\n';
+            report += '='.repeat(70) + '\n';
+            report += `📅 Generado: ${new Date().toLocaleString('es-AR')}\n`;
+            report += `📝 Total de tareas: ${allTasks.length}\n`;
+            report += '='.repeat(70) + '\n\n';
+            
+            // Estadísticas por estado
+            const byStatus = { pendiente: 0, progreso: 0, revision: 0, completada: 0, bloqueada: 0, cancelada: 0 };
+            allTasks.forEach(task => {
+                if (byStatus[task.status] !== undefined) byStatus[task.status]++;
+            });
+            
+            report += '📊 RESUMEN POR ESTADO:\n';
+            report += '-'.repeat(50) + '\n';
+            for (const [status, count] of Object.entries(byStatus)) {
+                const config = statusConfig[status];
+                if (count > 0) report += `   ${config.emoji} ${config.label}: ${count}\n`;
+            }
+            report += '\n';
+            
+            // Estadísticas por persona
+            const byPerson = {};
+            allTasks.forEach(task => {
+                if (!byPerson[task.person]) byPerson[task.person] = { total: 0, completadas: 0 };
+                byPerson[task.person].total++;
+                if (task.status === 'completada') byPerson[task.person].completadas++;
+            });
+            
+            report += '👥 RESUMEN POR PERSONA:\n';
+            report += '-'.repeat(50) + '\n';
+            for (const [person, data] of Object.entries(byPerson)) {
+                const porcentaje = Math.round((data.completadas / data.total) * 100);
+                report += `   ${person}: ${data.total} tareas (${data.completadas} completadas - ${porcentaje}%)\n`;
+            }
+            report += '\n' + '='.repeat(70) + '\n\n';
+            
+            // Detalle por día
+            const sortedDates = Object.keys(byDate).sort().reverse();
+            for (const date of sortedDates) {
+                const tasks = byDate[date];
+                const fecha = new Date(date).toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                report += `📅 ${fecha}\n`;
+                report += '-'.repeat(60) + '\n';
+                
+                tasks.forEach((task, idx) => {
+                    const status = statusConfig[task.status];
+                    report += `${idx + 1}. [${task.time}] ${task.person} - ${status.emoji} ${status.label}\n`;
+                    report += `   📝 ${task.description}\n`;
+                    report += `   📁 Proyecto: ${task.project}\n\n`;
+                });
+                report += `📊 Total día: ${tasks.length} tarea(s)\n`;
+                report += '='.repeat(70) + '\n\n';
+            }
+            
+            document.getElementById('reportText').innerText = report;
+            document.getElementById('reportContainer').style.display = 'block';
+        }
+        
+        // Reporte por estado
+        function generateStatusReport() {
+            if (allTasks.length === 0) {
+                alert('No hay tareas para generar reporte');
+                return;
+            }
+            
+            const byStatus = { pendiente: [], progreso: [], revision: [], completada: [], bloqueada: [], cancelada: [] };
+            allTasks.forEach(task => {
+                if (byStatus[task.status]) byStatus[task.status].push(task);
+            });
+            
+            let report = '='.repeat(70) + '\n';
+            report += '📊 REPORTE DE TAREAS POR ESTADO\n';
+            report += '='.repeat(70) + '\n';
+            report += `📅 Generado: ${new Date().toLocaleString('es-AR')}\n`;
+            report += '='.repeat(70) + '\n\n';
+            
+            for (const [statusKey, tasks] of Object.entries(byStatus)) {
+                const config = statusConfig[statusKey];
+                if (tasks.length > 0) {
+                    report += `${config.emoji} ${config.label.toUpperCase()} (${tasks.length} tareas)\n`;
+                    report += '-'.repeat(60) + '\n';
+                    
+                    tasks.forEach((task, idx) => {
+                        const fecha = new Date(task.date).toLocaleDateString('es-AR');
+                        report += `${idx + 1}. [${fecha} ${task.time}] ${task.person}\n`;
+                        report += `   📝 ${task.description}\n`;
+                        report += `   📁 Proyecto: ${task.project}\n\n`;
+                    });
+                    report += '\n';
+                }
+            }
+            
+            document.getElementById('reportText').innerText = report;
+            document.getElementById('reportContainer').style.display = 'block';
+        }
+        
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            alert('✅ Archivo guardado. ¡Envíaselo a tu jefa!');
+        }
+        
+        function copyReport() {
+            const reportText = document.getElementById('reportText').innerText;
+            navigator.clipboard.writeText(reportText);
+            alert('📋 Reporte copiado al portapapeles');
+        }
+        
+        function openGoogleSheet() {
+            alert('📂 Abrí tu Google Sheets manualmente desde drive.google.com\n\nBuscá la hoja llamada "Registro_Tareas"');
+        }
+        
+        function copyScriptCode() {
+            const codeElement = document.getElementById('scriptCode');
+            const codeText = codeElement.innerText;
+            navigator.clipboard.writeText(codeText);
+            alert('📋 Código copiado. Ahora pegalo en Extensiones → Apps Script en tu Google Sheets');
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Eventos
+        document.getElementById('taskForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const person = document.getElementById('person').value;
+            const description = document.getElementById('description').value.trim();
+            const project = document.getElementById('project').value.trim();
+            const status = document.getElementById('status').value;
+            
+            if (!person || !description) {
+                alert('❌ Completa todos los campos obligatorios');
+                return;
+            }
+            
+            const success = await addTask(person, description, project, status);
+            if (success) {
+                document.getElementById('description').value = '';
+                document.getElementById('project').value = '';
+                document.getElementById('description').focus();
+            }
+        });
+        
+        document.getElementById('filterPerson')?.addEventListener('change', () => {
+            renderTasks();
+            renderStats();
+        });
+        document.getElementById('filterStatus')?.addEventListener('change', () => {
+            renderTasks();
+            renderStats();
+        });
+        document.getElementById('filterProject')?.addEventListener('change', () => {
+            renderTasks();
+            renderStats();
+        });
+        document.getElementById('clearFiltersBtn')?.addEventListener('click', () => {
+            document.getElementById('filterPerson').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterProject').value = '';
+            renderTasks();
+            renderStats();
+        });
+        
+        document.getElementById('exportCSVBtn')?.addEventListener('click', exportToCSV);
+        document.getElementById('generateReportBtn')?.addEventListener('click', generateFullReport);
+        document.getElementById('generateStatusReportBtn')?.addEventListener('click', generateStatusReport);
+        document.getElementById('copyReportBtn')?.addEventListener('click', copyReport);
+        document.getElementById('openSheetBtn')?.addEventListener('click', openGoogleSheet);
+        document.getElementById('copyScriptBtn')?.addEventListener('click', copyScriptCode);
+        
+        // Inicializar
+        loadConfig();
+        
+        // Recargar cada 30 segundos
+        setInterval(() => {
+            if (SCRIPT_URL) loadAllTasks();
+        }, 30000);
+    </script>
+</body>
+</html>
