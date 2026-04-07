@@ -1087,7 +1087,21 @@
         document.getElementById('copyReportBtn')?.addEventListener('click', copyReport);
         
         // Inicializar
-        loadConfig();
+        function loadConfig() {
+    // 👇 AGREGÁ ESTAS 3 LÍNEAS 👇
+    if (!localStorage.getItem('googleScriptUrl')) {
+        localStorage.setItem('googleScriptUrl', 'https://script.google.com/macros/s/TU_NUEVA_URL_AQUI/exec');
+    }
+    
+    const saved = localStorage.getItem('googleScriptUrl');
+    if (saved) {
+        SCRIPT_URL = saved;
+        document.getElementById('scriptUrl').value = SCRIPT_URL;
+        document.getElementById('configCard').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        loadAllTasks();
+    }
+}
         
         // Recargar cada 30 segundos
         setInterval(() => {
