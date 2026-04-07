@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Trabajo - Equipo (Google Sheets)</title>
+    <title>Registro de Trabajo - Equipo (Con Eliminar y Editar)</title>
     <style>
         * {
             margin: 0;
@@ -101,6 +101,12 @@
             background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
         }
 
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            margin: 0 3px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -112,11 +118,14 @@
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
+            vertical-align: middle;
         }
 
         th {
             background: #f7f7f7;
             font-weight: 600;
+            position: sticky;
+            top: 0;
         }
 
         .badge {
@@ -138,6 +147,23 @@
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
 
         .alert-success {
@@ -175,6 +201,12 @@
             padding: 10px;
             background: white;
             border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: scale(1.05);
         }
 
         .stat-number {
@@ -213,24 +245,50 @@
             font-size: 1.1rem;
         }
 
-        .config-step {
-            background: #e0e7ff;
-            padding: 15px;
-            border-radius: 10px;
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
         }
 
-        .config-step h3 {
-            color: #1e40af;
-            margin-bottom: 10px;
+        .close-modal {
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #999;
         }
 
-        .config-step code {
-            background: #1e1e2e;
-            color: #a5d6ff;
-            padding: 2px 6px;
-            border-radius: 5px;
-            font-family: monospace;
+        .close-modal:hover {
+            color: #333;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
         @media (max-width: 768px) {
@@ -245,6 +303,12 @@
             .filter-row {
                 flex-direction: column;
             }
+            .action-buttons {
+                flex-direction: column;
+            }
+            .btn-sm {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -254,70 +318,53 @@
         
         <div id="statusAlert"></div>
         
-        <!-- Pantalla de configuración inicial -->
+        <!-- Configuración -->
         <div class="card" id="configCard">
             <h2>⚙️ Configuración Inicial</h2>
-            <div class="config-step">
-                <h3>📌 Paso 1: Crear Google Sheets</h3>
-                <p>1. Ve a <a href="https://sheets.new" target="_blank">sheets.new</a> y crea una hoja llamada "Registro_Tareas"</p>
-                <p>2. Compártela con <strong>"Cualquier persona con el enlace puede editar"</strong></p>
-                <p>3. Copia el enlace del sheet</p>
-            </div>
-            
-            <div class="config-step">
-                <h3>🔧 Paso 2: Configurar Apps Script</h3>
-                <p>1. En tu Google Sheets, ve a <strong>Extensiones → Apps Script</strong></p>
-                <p>2. Pega el código del servidor (está más abajo en esta página)</p>
-                <p>3. Haz clic en <strong>"Implementar" → "Nueva implementación"</strong></p>
-                <p>4. Tipo: <strong>"Aplicación web"</strong>, acceso: <strong>"Cualquier persona"</strong></p>
-                <p>5. Copia la URL que aparece (termina en <code>/exec</code>)</p>
-            </div>
-            
             <div class="form-group">
-                <label>🔗 Pegá acá la URL del Google Apps Script</label>
+                <label>🔗 URL del Google Apps Script</label>
                 <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
-                <small>Ejemplo: https://script.google.com/macros/s/ABC123/exec</small>
+                <small>Pegá la URL que copiaste al desplegar el Apps Script</small>
             </div>
-            
             <button id="saveConfigBtn" class="btn">✅ Conectar con Google Sheets</button>
         </div>
         
-        <!-- Contenido principal (se muestra después de conectar) -->
+        <!-- Contenido principal -->
         <div id="mainContent" style="display: none;">
-            <!-- Formulario de tarea -->
+            <!-- Formulario -->
             <div class="card">
                 <h2>➕ Agregar nueva tarea</h2>
                 <form id="taskForm">
                     <div class="form-group">
                         <label>👤 ¿Quién realizó la tarea? *</label>
                         <select id="person" required>
-                            <option value="">Seleccionar persona</option>
-                            <option value="Meli">Meli</option>
-                            <option value="Vicky">Vicky</option>
-                            <option value="Lizi">Lizi</option>
-                            <option value="Dani">Dani</option>
-                            <option value="Silvi">Silvi</option>
-                            <option value="Seba">Seba</option>
-                            <option value="Mili">Mili</option>
-                            <option value="Rosario">Rosario</option>
-                            <option value="Gabi">Gabi</option>
-                            <option value="Tomi">Tomi</option>
-                            <option value="Ale">Ale</option>
-                            <option value="Mica">Mica</option>
-                            <option value="Marisa">Marisa</option>
-                            <option value="Eliana">Eliana</option>
-                            <option value="Gabriel">Gabriel</option>
+                           <option value="">Seleccionar persona</option>
+                                <option value="Meli">Meli</option>
+                                <option value="Vicky">Vicky</option>
+                                <option value="Lizi">Lizi</option>
+                                <option value="Dani">Dani</option>
+                                <option value="Silvi">Silvi</option>
+                                <option value="Seba">Seba</option>
+                                <option value="Mili">Mili</option>
+                                <option value="Rosario">Rosario</option>
+                                <option value="Gabi">Gabi</option>
+                                <option value="Tomi">Tomi</option>
+                                <option value="Ale">Ale</option>
+                                <option value="Mica">Mica</option>
+                                <option value="Marisa">Marisa</option>
+                                <option value="Eliana">Eliana</option>
+                                <option value="Gabriel">Gabriel</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
                         <label>📝 Descripción de la tarea *</label>
-                        <textarea id="description" required placeholder="Ej: Desarrollo del login, reunión con cliente, corrección de bugs..."></textarea>
+                        <textarea id="description" required placeholder="Ej: Desarrollo del login, reunión con cliente..."></textarea>
                     </div>
                     
                     <div class="form-group">
                         <label>🏷️ Proyecto / Cliente</label>
-                        <input type="text" id="project" placeholder="Ej: Proyecto Alpha, Cliente XYZ">
+                        <input type="text" id="project" placeholder="Ej: Proyecto Alpha">
                     </div>
                     
                     <div class="form-group">
@@ -376,6 +423,9 @@
             <!-- Lista de tareas -->
             <div class="card">
                 <h2>📌 Listado de tareas</h2>
+                <div style="margin-bottom: 15px;">
+                    <button id="refreshBtn" class="btn-sm btn">🔄 Refrescar</button>
+                </div>
                 <div id="tasksList">
                     <div class="loading">🔄 Cargando tareas desde Google Sheets...</div>
                 </div>
@@ -388,7 +438,6 @@
                     <button id="exportCSVBtn" class="btn-export">📊 Exportar a Excel (CSV)</button>
                     <button id="generateReportBtn" class="btn-secondary">📝 Reporte completo</button>
                     <button id="generateStatusReportBtn" class="btn-warning">📊 Reporte por estado</button>
-                    <button id="openSheetBtn" class="btn" style="background: #34a853;">📂 Abrir Google Sheets</button>
                 </div>
                 <div id="reportContainer" style="display: none;">
                     <div class="report-area" id="reportText"></div>
@@ -397,135 +446,47 @@
             </div>
         </div>
         
-        <!-- Código del Apps Script para copiar -->
-        <div class="card" id="scriptCodeCard">
-            <h2>📋 Código para Google Apps Script</h2>
-            <p>Copia y pega este código en <strong>Extensiones → Apps Script</strong> en tu Google Sheets:</p>
-            <div class="report-area" id="scriptCode" style="background: #1e1e2e; color: #a5d6ff; font-family: monospace; font-size: 0.85rem;">
-// ========== CONFIGURACIÓN ==========
-const SHEET_NAME = "Registro_Tareas";
-
-function doGet(e) {
-  return handleRequest(e);
-}
-
-function doPost(e) {
-  return handleRequest(e);
-}
-
-function handleRequest(e) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-  
-  // Crear hoja si no existe
-  if (!sheet) {
-    const newSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet(SHEET_NAME);
-    newSheet.appendRow(['Fecha', 'Hora', 'Persona', 'Proyecto', 'Descripción', 'ID', 'Estado', 'Timestamp']);
-    return handleRequest(e);
-  }
-  
-  // Verificar encabezados
-  const firstRow = sheet.getRange(1, 1, 1, 8).getValues()[0];
-  if (!firstRow[0]) {
-    sheet.appendRow(['Fecha', 'Hora', 'Persona', 'Proyecto', 'Descripción', 'ID', 'Estado', 'Timestamp']);
-  }
-  
-  const params = e ? e.parameter : {};
-  const action = params.action;
-  
-  // Obtener todas las tareas
-  if (action === "getTasks") {
-    const data = sheet.getDataRange().getValues();
-    const tasks = [];
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][0] && data[i][0] !== "") {
-        tasks.push({
-          date: data[i][0],
-          time: data[i][1],
-          person: data[i][2],
-          project: data[i][3],
-          description: data[i][4],
-          id: data[i][5],
-          status: data[i][6] || 'pendiente',
-          timestamp: data[i][7]
-        });
-      }
-    }
-    return ContentService.createTextOutput(JSON.stringify({
-      success: true,
-      tasks: tasks
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-  
-  // Agregar nueva tarea
-  if (action === "addTask") {
-    const newTask = {
-      date: params.date || new Date().toISOString().split('T')[0],
-      time: params.time || new Date().toLocaleTimeString('es-AR'),
-      person: params.person,
-      project: params.project || "Sin proyecto",
-      description: params.description,
-      id: Date.now().toString(),
-      status: params.status || 'pendiente',
-      timestamp: new Date().toISOString()
-    };
-    
-    sheet.appendRow([
-      newTask.date,
-      newTask.time,
-      newTask.person,
-      newTask.project,
-      newTask.description,
-      newTask.id,
-      newTask.status,
-      newTask.timestamp
-    ]);
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      success: true,
-      task: newTask
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-  
-  // Eliminar tarea
-  if (action === "deleteTask") {
-    const taskId = params.id;
-    const data = sheet.getDataRange().getValues();
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][5] === taskId) {
-        sheet.deleteRow(i + 1);
-        break;
-      }
-    }
-    return ContentService.createTextOutput(JSON.stringify({
-      success: true,
-      message: "Tarea eliminada"
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-  
-  // Actualizar estado
-  if (action === "updateStatus") {
-    const taskId = params.id;
-    const newStatus = params.status;
-    const data = sheet.getDataRange().getValues();
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][5] === taskId) {
-        sheet.getRange(i + 1, 7).setValue(newStatus);
-        break;
-      }
-    }
-    return ContentService.createTextOutput(JSON.stringify({
-      success: true,
-      message: "Estado actualizado"
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify({
-    success: false,
-    error: "Acción no válida"
-  })).setMimeType(ContentService.MimeType.JSON);
-}
+        <!-- Modal para editar tarea -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>✏️ Editar tarea</h3>
+                    <span class="close-modal">&times;</span>
+                </div>
+                <form id="editForm">
+                    <input type="hidden" id="editId">
+                    <div class="form-group">
+                        <label>👤 Persona</label>
+                        <select id="editPerson" required>
+                            <option value="Ana">Ana</option>
+                            <option value="Carlos">Carlos</option>
+                            <option value="Laura">Laura</option>
+                            <option value="Miguel">Miguel</option>
+                            <option value="Sofía">Sofía</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>📝 Descripción</label>
+                        <textarea id="editDescription" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>🏷️ Proyecto</label>
+                        <input type="text" id="editProject">
+                    </div>
+                    <div class="form-group">
+                        <label>📊 Estado</label>
+                        <select id="editStatus">
+                            <option value="pendiente">⏳ Pendiente</option>
+                            <option value="progreso">🔄 En progreso</option>
+                            <option value="revision">👀 En revisión</option>
+                            <option value="completada">✅ Completada</option>
+                            <option value="bloqueada">🔒 Bloqueada</option>
+                            <option value="cancelada">❌ Cancelada</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">💾 Guardar cambios</button>
+                </form>
             </div>
-            <button id="copyScriptBtn" class="btn" style="margin-top: 15px;">📋 Copiar código del servidor</button>
         </div>
     </div>
 
@@ -550,7 +511,6 @@ function handleRequest(e) {
                 document.getElementById('scriptUrl').value = SCRIPT_URL;
                 document.getElementById('configCard').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('scriptCodeCard').style.display = 'none';
                 loadAllTasks();
             }
         }
@@ -559,29 +519,28 @@ function handleRequest(e) {
         document.getElementById('saveConfigBtn').addEventListener('click', () => {
             const url = document.getElementById('scriptUrl').value.trim();
             if (!url) {
-                showAlert('statusAlert', '❌ Por favor, ingresa la URL del Google Apps Script', 'error');
+                showAlert('❌ Por favor, ingresa la URL del Google Apps Script', 'error');
                 return;
             }
             
             if (!url.includes('script.google.com')) {
-                showAlert('statusAlert', '❌ URL inválida. Debe ser una URL de script.google.com', 'error');
+                showAlert('❌ URL inválida. Debe ser una URL de script.google.com', 'error');
                 return;
             }
             
             SCRIPT_URL = url;
             localStorage.setItem('googleScriptUrl', url);
-            showAlert('statusAlert', '✅ Configuración guardada. Conectando con Google Sheets...', 'success');
+            showAlert('✅ Configuración guardada. Conectando con Google Sheets...', 'success');
             
             setTimeout(() => {
                 document.getElementById('configCard').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('scriptCodeCard').style.display = 'none';
                 loadAllTasks();
             }, 1500);
         });
         
-        function showAlert(containerId, message, type) {
-            const container = document.getElementById(containerId);
+        function showAlert(message, type) {
+            const container = document.getElementById('statusAlert');
             if (!container) return;
             container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
             setTimeout(() => {
@@ -589,12 +548,11 @@ function handleRequest(e) {
             }, 4000);
         }
         
-        // Cargar todas las tareas desde Google Sheets
+        // Cargar todas las tareas
         async function loadAllTasks() {
             if (!SCRIPT_URL) return;
             
             try {
-                showAlert('statusAlert', '🔄 Cargando tareas desde Google Sheets...', 'info');
                 const response = await fetch(`${SCRIPT_URL}?action=getTasks&t=${Date.now()}`);
                 const data = await response.json();
                 
@@ -603,12 +561,12 @@ function handleRequest(e) {
                     updateFilters();
                     renderTasks();
                     renderStats();
-                    showAlert('statusAlert', `✅ ${allTasks.length} tareas cargadas desde Google Sheets`, 'success');
+                    showAlert(`✅ ${allTasks.length} tareas cargadas desde Google Sheets`, 'success');
                 } else {
-                    showAlert('statusAlert', '❌ Error al cargar tareas: ' + (data.error || 'Desconocido'), 'error');
+                    showAlert('❌ Error al cargar tareas: ' + (data.error || 'Desconocido'), 'error');
                 }
             } catch (error) {
-                showAlert('statusAlert', '❌ Error de conexión: ' + error.message, 'error');
+                showAlert('❌ Error de conexión: ' + error.message, 'error');
             }
         }
         
@@ -632,14 +590,45 @@ function handleRequest(e) {
                 
                 if (data.success) {
                     await loadAllTasks();
-                    showAlert('statusAlert', '✅ Tarea guardada en Google Sheets', 'success');
+                    showAlert('✅ Tarea guardada en Google Sheets', 'success');
                     return true;
                 } else {
-                    showAlert('statusAlert', '❌ Error al guardar: ' + data.error, 'error');
+                    showAlert('❌ Error al guardar: ' + data.error, 'error');
                     return false;
                 }
             } catch (error) {
-                showAlert('statusAlert', '❌ Error de conexión: ' + error.message, 'error');
+                showAlert('❌ Error de conexión: ' + error.message, 'error');
+                return false;
+            }
+        }
+        
+        // Editar tarea
+        async function editTask(taskId, person, description, project, status) {
+            if (!SCRIPT_URL) return false;
+            
+            const params = new URLSearchParams({
+                action: 'editTask',
+                id: taskId,
+                person: person,
+                description: description,
+                project: project || 'Sin proyecto',
+                status: status
+            });
+            
+            try {
+                const response = await fetch(`${SCRIPT_URL}?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    await loadAllTasks();
+                    showAlert('✅ Tarea editada correctamente', 'success');
+                    return true;
+                } else {
+                    showAlert('❌ Error al editar: ' + data.error, 'error');
+                    return false;
+                }
+            } catch (error) {
+                showAlert('❌ Error de conexión: ' + error.message, 'error');
                 return false;
             }
         }
@@ -654,18 +643,18 @@ function handleRequest(e) {
                 
                 if (data.success) {
                     await loadAllTasks();
-                    showAlert('statusAlert', '✅ Estado actualizado en Google Sheets', 'success');
+                    showAlert('✅ Estado actualizado en Google Sheets', 'success');
                 } else {
-                    showAlert('statusAlert', '❌ Error al actualizar estado', 'error');
+                    showAlert('❌ Error al actualizar estado', 'error');
                 }
             } catch (error) {
-                showAlert('statusAlert', '❌ Error de conexión', 'error');
+                showAlert('❌ Error de conexión', 'error');
             }
         }
         
         // Eliminar tarea
         async function deleteTask(taskId) {
-            if (!confirm('⚠️ ¿Eliminar esta tarea permanentemente de Google Sheets?')) return;
+            if (!confirm('⚠️ ¿Estás SEGURO de eliminar esta tarea permanentemente de Google Sheets? ¡No se puede deshacer!')) return;
             
             try {
                 const response = await fetch(`${SCRIPT_URL}?action=deleteTask&id=${taskId}`);
@@ -673,12 +662,12 @@ function handleRequest(e) {
                 
                 if (data.success) {
                     await loadAllTasks();
-                    showAlert('statusAlert', '✅ Tarea eliminada de Google Sheets', 'success');
+                    showAlert('✅ Tarea eliminada de Google Sheets', 'success');
                 } else {
-                    showAlert('statusAlert', '❌ Error al eliminar', 'error');
+                    showAlert('❌ Error al eliminar', 'error');
                 }
             } catch (error) {
-                showAlert('statusAlert', '❌ Error de conexión', 'error');
+                showAlert('❌ Error de conexión', 'error');
             }
         }
         
@@ -713,7 +702,7 @@ function handleRequest(e) {
             });
         }
         
-        // Renderizar estadísticas
+        // Renderizar estadísticas (clickeables)
         function renderStats() {
             const filteredTasks = getFilteredTasks();
             const stats = { pendiente: 0, progreso: 0, revision: 0, completada: 0, bloqueada: 0, cancelada: 0 };
@@ -725,33 +714,67 @@ function handleRequest(e) {
             const container = document.getElementById('statsContainer');
             container.innerHTML = `
                 <div class="stats">
-                    <div class="stat-card">
+                    <div class="stat-card" onclick="filterByStatus('')">
                         <div class="stat-number">${filteredTasks.length}</div>
                         <div>Total tareas</div>
                     </div>
-                    <div class="stat-card" style="background: #fef3c7;">
+                    <div class="stat-card" style="background: #fef3c7;" onclick="filterByStatus('pendiente')">
                         <div class="stat-number">${stats.pendiente}</div>
                         <div>⏳ Pendiente</div>
                     </div>
-                    <div class="stat-card" style="background: #dbeafe;">
+                    <div class="stat-card" style="background: #dbeafe;" onclick="filterByStatus('progreso')">
                         <div class="stat-number">${stats.progreso}</div>
                         <div>🔄 Progreso</div>
                     </div>
-                    <div class="stat-card" style="background: #e0e7ff;">
+                    <div class="stat-card" style="background: #e0e7ff;" onclick="filterByStatus('revision')">
                         <div class="stat-number">${stats.revision}</div>
                         <div>👀 Revisión</div>
                     </div>
-                    <div class="stat-card" style="background: #d1fae5;">
+                    <div class="stat-card" style="background: #d1fae5;" onclick="filterByStatus('completada')">
                         <div class="stat-number">${stats.completada}</div>
                         <div>✅ Completada</div>
                     </div>
-                    <div class="stat-card" style="background: #fecaca;">
+                    <div class="stat-card" style="background: #fecaca;" onclick="filterByStatus('bloqueada')">
                         <div class="stat-number">${stats.bloqueada}</div>
                         <div>🔒 Bloqueada</div>
                     </div>
                 </div>
             `;
         }
+        
+        // Filtrar por estado al hacer clic en estadística
+        window.filterByStatus = function(status) {
+            const filterStatus = document.getElementById('filterStatus');
+            filterStatus.value = status;
+            renderTasks();
+            renderStats();
+        };
+        
+        // Abrir modal de edición
+        window.openEditModal = function(taskId) {
+            const task = allTasks.find(t => t.id == taskId);
+            if (!task) return;
+            
+            document.getElementById('editId').value = task.id;
+            document.getElementById('editPerson').value = task.person;
+            document.getElementById('editDescription').value = task.description;
+            document.getElementById('editProject').value = task.project;
+            document.getElementById('editStatus').value = task.status;
+            
+            document.getElementById('editModal').style.display = 'flex';
+        };
+        
+        // Cerrar modal
+        document.querySelector('.close-modal').addEventListener('click', () => {
+            document.getElementById('editModal').style.display = 'none';
+        });
+        
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        };
         
         // Renderizar lista de tareas
         function renderTasks() {
@@ -799,10 +822,13 @@ function handleRequest(e) {
                                     <option value="bloqueada" ${task.status === 'bloqueada' ? 'selected' : ''}>🔒 Bloqueada</option>
                                     <option value="cancelada" ${task.status === 'cancelada' ? 'selected' : ''}>❌ Cancelada</option>
                                 </select>
-                            </td>
+                             </td>
                             <td>
-                                <button class="delete-btn" data-id="${task.id}" style="background:#f56565;color:white;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;" title="Eliminar tarea">🗑️</button>
-                            </td>
+                                <div class="action-buttons">
+                                    <button class="btn-sm btn-warning" onclick="openEditModal('${task.id}')" title="Editar tarea">✏️ Editar</button>
+                                    <button class="btn-sm btn-danger" onclick="deleteTask('${task.id}')" title="Eliminar tarea">🗑️ Eliminar</button>
+                                </div>
+                             </td>
                         </tr>`;
             });
             
@@ -818,11 +844,6 @@ function handleRequest(e) {
                     const newStatus = select.value;
                     updateTaskStatus(taskId, newStatus);
                 });
-            });
-            
-            // Eventos para eliminar
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', () => deleteTask(btn.dataset.id));
             });
         }
         
@@ -981,17 +1002,6 @@ function handleRequest(e) {
             alert('📋 Reporte copiado al portapapeles');
         }
         
-        function openGoogleSheet() {
-            alert('📂 Abrí tu Google Sheets manualmente desde drive.google.com\n\nBuscá la hoja llamada "Registro_Tareas"');
-        }
-        
-        function copyScriptCode() {
-            const codeElement = document.getElementById('scriptCode');
-            const codeText = codeElement.innerText;
-            navigator.clipboard.writeText(codeText);
-            alert('📋 Código copiado. Ahora pegalo en Extensiones → Apps Script en tu Google Sheets');
-        }
-        
         function escapeHtml(text) {
             if (!text) return '';
             const div = document.createElement('div');
@@ -1020,6 +1030,23 @@ function handleRequest(e) {
             }
         });
         
+        document.getElementById('editForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const person = document.getElementById('editPerson').value;
+            const description = document.getElementById('editDescription').value.trim();
+            const project = document.getElementById('editProject').value.trim();
+            const status = document.getElementById('editStatus').value;
+            
+            if (!person || !description) {
+                alert('❌ Completa todos los campos');
+                return;
+            }
+            
+            await editTask(id, person, description, project, status);
+            document.getElementById('editModal').style.display = 'none';
+        });
+        
         document.getElementById('filterPerson')?.addEventListener('change', () => {
             renderTasks();
             renderStats();
@@ -1039,13 +1066,14 @@ function handleRequest(e) {
             renderTasks();
             renderStats();
         });
+        document.getElementById('refreshBtn')?.addEventListener('click', () => {
+            loadAllTasks();
+        });
         
         document.getElementById('exportCSVBtn')?.addEventListener('click', exportToCSV);
         document.getElementById('generateReportBtn')?.addEventListener('click', generateFullReport);
         document.getElementById('generateStatusReportBtn')?.addEventListener('click', generateStatusReport);
         document.getElementById('copyReportBtn')?.addEventListener('click', copyReport);
-        document.getElementById('openSheetBtn')?.addEventListener('click', openGoogleSheet);
-        document.getElementById('copyScriptBtn')?.addEventListener('click', copyScriptCode);
         
         // Inicializar
         loadConfig();
@@ -1054,6 +1082,10 @@ function handleRequest(e) {
         setInterval(() => {
             if (SCRIPT_URL) loadAllTasks();
         }, 30000);
+        
+        // Exponer funciones globalmente
+        window.deleteTask = deleteTask;
+        window.openEditModal = openEditModal;
     </script>
 </body>
 </html>
